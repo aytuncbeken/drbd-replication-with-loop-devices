@@ -1,0 +1,73 @@
+---
+- name: Import DRBD Repositories
+  command: rpm --replacepkgs -ivh http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+- name: Import GPG Key
+  command: rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org
+- name: Install DRBD packages
+  yum:
+    name: "{{item}}"
+    state: present
+  loop:
+    - epel-release
+    - python-pip
+    - kmod-drbd90
+    - drbd90-utils
+- name: Install dnspython package
+  pip:
+    name: dnspython
+    state: present
+- name: modprobe drbd
+  modprobe:
+    name: drbd
+    state: present
+- name: Create config from template
+  template:
+    src: "replica.j2"
+    dest: "/etc/drbd.d/replica.res"
+- name: Create Empty File
+  command: "fallocate -l {{disk_size}} {{disk_image_path}}" 
+- name: Detach all loop devices
+  command: losetup -D
+- name: Loop Image as device
+  shell: losetup "{{loop_dev_name}}" "{{disk_image_path}}"
+- name: Wait for loop device
+  wait_for: timeout=3
+- name: Wipe loop device
+  command: wipefs -a -f "{{loop_dev_name}}"
+- name: Setup DRBD cluster
+  command: drbdadm create-md --force replica
+- name: Get Up DRBD cluster
+  command: drbdadm up replica
+- name: Set First Node as Primary
+  command: drbdadm primary all --force
+  when: inventory_hostname == groups["servers"][0]
+- name: Set Other Nodes as Secondary
+  command: drbdadm secondary all
+  when: inventory_hostname != groups["servers"][0]
+- name: Format loop device with ext4
+  filesystem:
+    fstype: ext4
+    dev: "{{drbd_dev_name}}"
+    force: yes
+  when: inventory_hostname == groups["servers"][0]
+- name: mount DRBD disk
+  mount:
+    path: "{{mount_point}}"
+    src: "{{drbd_dev_name}}"
+    fstype: ext4
+    state: mounted
+  when: inventory_hostname == groups["servers"][0]
+- name: Wait For Primary Disk Status
+  shell: "drbdadm status | grep -F ' disk:' | grep -F 'UpToDate' | wc -l"
+  register: sync_result
+  until: sync_result.stdout == "1"
+  retries: 20
+  delay: 5
+  when: inventory_hostname == groups["servers"][0]
+- name: Wait For Secondary Disks Status
+  shell: "drbdadm status | grep -F ' disk:' | grep -F 'UpToDate' | wc -l"
+  register: sync_result
+  until: sync_result.stdout == "1"
+  retries: 20
+  delay: 5
+  when: inventory_hostname != groups["servers"][0]

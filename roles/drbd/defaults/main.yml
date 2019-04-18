@@ -1,0 +1,5 @@
+parent_path: "/"
+disk_image_name: "drbd.img"
+disk_image_path: "{{parent_path}}/{{disk_image_name}}"
+drbd_dev_name: "/dev/drbd0"
+loop_dev_name: "/dev/loop10"

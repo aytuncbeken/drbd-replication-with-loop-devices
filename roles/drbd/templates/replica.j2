@@ -1,0 +1,12 @@
+resource replica {
+  protocol C;
+  {% for host in groups["servers"] %}
+  on {{host}} {
+    device {{drbd_dev_name}};
+    disk {{loop_dev_name}};
+    address {{ lookup('dig', host) }}:7789;
+    meta-disk internal;	
+  }
+  {% endfor %}
+}
+

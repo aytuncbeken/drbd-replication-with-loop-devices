@@ -1,0 +1,8 @@
+---
+- name: Install
+  include_tasks: install.yml
+  when: ansible_action == "install"
+
+- name: Uninstall
+  include_tasks: uninstall.yml
+  when: ansible_action == "uninstall"

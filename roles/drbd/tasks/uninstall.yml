@@ -1,0 +1,17 @@
+---
+- name: Umount DRBD disk
+  mount: 
+    path: "{{mount_point}}"
+    src: "{{drbd_dev_name}}"
+    state: unmounted
+  ignore_errors: yes
+- name: Wait for unmount
+  wait_for: timeout=3
+- name: Get down DRBD replica
+  command: drbdadm down replica
+- name: Detach loop device
+  command: losetup -d "{{loop_dev_name}}"
+- name: Remove disk image
+  file:
+    path: "{{disk_image_path}}"
+    state: absent
