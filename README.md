@@ -20,4 +20,4 @@ Start ansible playbook by running command below
 ansible-playbook -i hosts install.yml
 ```
 <br>
-After success full install, you can access to directory ( path given in the parameter **mount_point** ) in the first host.
+After success full install, you can access to directory, path given in the parameter *mount_point*, in the first host.
