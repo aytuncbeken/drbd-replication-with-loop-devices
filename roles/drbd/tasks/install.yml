@@ -12,10 +12,9 @@
     - python-pip
     - kmod-drbd90
     - drbd90-utils
-- name: Install dnspython package
-  pip:
-    name: dnspython
-    state: present
+    - bind-utils
+- name: Update Pip
+  command: pip install --upgrade pip
 - name: modprobe drbd
   modprobe:
     name: drbd

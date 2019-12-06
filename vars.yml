@@ -1,2 +1,2 @@
-disk_size: "1G"
+disk_size: "5G"
 mount_point: "/replica-disk"
